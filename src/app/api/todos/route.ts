@@ -2,11 +2,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-let todos: { id: number; text: string }[] = [];
+const todos: { id: number; text: string }[] = [];
 let nextId = 1;
 
 // GETリクエスト
-export async function GET(req: NextRequest) {
+export async function GET() {
   return NextResponse.json({ todos });
 }
 
