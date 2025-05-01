@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import TodoItem from './components/todoItem';
 
-type Todo = {
+export type Todo = {
   id: number;
   text: string;
   is_done: boolean;
@@ -18,7 +19,8 @@ export default function Home() {
     const fetchTodos = async () => {
       const { data, error } = await supabase
         .from('todos')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error('データ取得エラー:', error);
@@ -134,30 +136,44 @@ export default function Home() {
         style={{ marginRight: '10px' }}
       />
       <button onClick={addTodo}>追加</button>
-
-      <ul style={{ marginTop: '20px' }}>
-        {todos.map(todo => (
-          <li key={todo.id}>
-            <input
-              type="checkbox"
-              checked={todo.is_done}
-              onChange={() => toggleDone(todo.id, todo.is_done)}
-              style={{ marginRight: '8px' }}
-            />
-            {editingId === todo.id ? (
-              <button onClick={saveEdit}>保存</button>
-            ) : (
-              <button onClick={() => startEdit(todo)}>編集</button>
-            )}
-            <button onClick={() => deleteTodo(todo.id)}>削除</button>
-
-            <span style={{ textDecoration: todo.is_done ? 'line-through' : 'none' }}>
-              {todo.text}
-            </span>
-          </li>
-        ))}
-      </ul>
-
+  
+      <div style={{ display: 'flex', gap: '100px', marginTop: '40px' }}>
+        {/* 未完了リスト */}
+        <div>
+          <h2>TODO:</h2>
+          <ul>
+            {todos.filter(todo => !todo.is_done).map(todo => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                editingId={editingId}
+                toggleDone={toggleDone}
+                startEdit={startEdit}
+                saveEdit={saveEdit}
+                deleteTodo={deleteTodo}
+              />
+            ))}
+          </ul>
+        </div>
+  
+        {/* 完了リスト */}
+        <div>
+          <h2>完了:</h2>
+          <ul>
+            {todos.filter(todo => todo.is_done).map(todo => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                editingId={editingId}
+                toggleDone={toggleDone}
+                startEdit={startEdit}
+                saveEdit={saveEdit}
+                deleteTodo={deleteTodo}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
