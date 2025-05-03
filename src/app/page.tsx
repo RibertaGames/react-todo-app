@@ -126,23 +126,26 @@ export default function Home() {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>TODOアプリ</h1>
-      <input
-        type="text"
-        value={text ?? ''}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="やることを書く"
-        style={{ marginRight: '10px' }}
-      />
-      <button onClick={addTodo}>追加</button>
-  
-      <div style={{ display: 'flex', gap: '100px', marginTop: '40px' }}>
-        {/* 未完了リスト */}
-        <div>
-          <h2>TODO:</h2>
-          <ul>
-            {todos.filter(todo => !todo.is_done).map(todo => (
+    <div className="p-6 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">TODOアプリ</h1>
+      <div className="flex items-center gap-2 mb-6">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="やることを書く"
+          className="border border-gray-300 rounded px-3 py-1 flex-grow"
+        />
+        <button onClick={addTodo} className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+          追加
+        </button>
+      </div>
+
+      <div className="flex gap-8">
+        <div className="w-1/2">
+          <h2 className="text-lg font-semibold mb-2">未完了</h2>
+          <ul className="space-y-2">
+            {todos.filter((t) => !t.is_done).map((todo) => (
               <TodoItem
                 key={todo.id}
                 todo={todo}
@@ -155,12 +158,11 @@ export default function Home() {
             ))}
           </ul>
         </div>
-  
-        {/* 完了リスト */}
-        <div>
-          <h2>完了:</h2>
-          <ul>
-            {todos.filter(todo => todo.is_done).map(todo => (
+
+        <div className="w-1/2">
+          <h2 className="text-lg font-semibold mb-2">完了</h2>
+          <ul className="space-y-2">
+            {todos.filter((t) => t.is_done).map((todo) => (
               <TodoItem
                 key={todo.id}
                 todo={todo}
