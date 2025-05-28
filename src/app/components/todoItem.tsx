@@ -31,7 +31,7 @@ export default function TodoItem({
         <span
           className={`${
             todo.is_done ? 'line-through text-gray-400' : ''
-          } text-base`}
+          } text-base text-black`}
         >
           {todo.text}
         </span>
