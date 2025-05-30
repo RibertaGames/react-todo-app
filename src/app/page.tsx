@@ -10,6 +10,7 @@ export type Todo = {
   id: number;
   text: string;
   is_done: boolean;
+  is_routine: boolean;
   created_at: string;
 };
 
@@ -20,12 +21,12 @@ export default function Home() {
   const [taskType, setTaskType] = useState<'todo' | 'routine'>('todo');
   const [date, setDate] = useState<Date | null>(new Date());
   const [repeatType, setRepeatType] = useState<'daily' | 'weekly'>('daily');
-const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日（weeklyのみ）
+  const [repeatWeekType, setRepeatWeekType] = useState<number[]>([]); // 週の曜日（weeklyのみ）
 
   // 初回ロード時にTODOを取得（Supabaseから）
   useEffect(() => {
-    fetchTodos();
     generateRoutineTodos();
+    fetchTodos();
   }, []);
 
   //TODOを取得
@@ -48,8 +49,6 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
   //TODO追加機能
   const addTodo = async () => {
     if (!text.trim() || !date) return;
-    
-    let newTodos: Todo[] = [];
 
     if (taskType === 'todo') {
       const { data, error} = await supabase.from('todos').insert([
@@ -65,27 +64,43 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
         return;
       }
 
-      newTodos = data as Todo[];
-    } else {
-      const { data, error} = await supabase.from('routine_tasks').insert([
-        {
-          text,
-          repeat_type: 'once',
-          day_of_week: null,
-          last_generated: null,
-          created_at: dayjs(date).toISOString(),
-        },
-      ]).select();
+      setTodos(prev => [...prev, ...data]);
 
-      if (error) {
-        console.error('追加エラー:', error);
+    } else {
+
+      if (repeatType === 'weekly' && repeatWeekType.length === 0) {
+        alert('曜日を1つ以上選択してください');
         return;
       }
 
-      newTodos = data as Todo[];
-    }
+      const inserts = repeatType === 'weekly'
+      ? [{
+          text,
+          created_at: dayjs(date).toISOString(),
+          updated_at: null,
+          repeat_type: 'weekly',
+          repeat_week_type: repeatWeekType,
+        }]
+      : [{
+          text,
+          created_at: dayjs(date).toISOString(),
+          updated_at: null,
+          repeat_type: 'daily',
+          repeat_week_type: null,
+        }];
 
-    setTodos(prev => [...prev, ...newTodos]);
+      const { data, error } = await supabase.from('routine_tasks').insert(inserts).select();
+
+      if (error) {
+        console.error('ルーティンタスク追加エラー:', error);
+        return;
+      }
+      setRepeatWeekType([]);
+      setRepeatType('daily');
+
+      //TODOに追加できたら追加する
+      generateRoutineTodos();
+    }
 
     setText('');
     setDate(new Date());
@@ -175,7 +190,7 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
 
   // 曜日選択トグル関数
   const toggleDay = (day: number) => {
-    setSelectedDays(prev =>
+    setRepeatWeekType(prev =>
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
     );
   };
@@ -196,30 +211,36 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
     }
   
     for (const routine of routines || []) {
-      const last = routine.last_generated
-        ? dayjs(routine.last_generated)
+      const last = routine.updated_at
+        ? dayjs(routine.updated_at)
         : null;
   
       // 今日追加すべきルーティンかどうかを判定
       const isDaily = routine.repeat_type === 'daily';
-      const isWeekly = routine.repeat_type === 'weekly' && routine.day_of_week === weekday;
+      const isWeekly = routine.repeat_type === 'weekly' && routine.repeat_week_type?.includes(weekday);
   
       const alreadyGeneratedToday = last?.isSame(today, 'day');
   
       if ((isDaily || isWeekly) && !alreadyGeneratedToday) {
         // todos テーブルに追加
-        await supabase.from('todos').insert({
+        const { data, error} = await supabase.from('todos').insert({
           text: routine.text,
           is_done: false,
           created_at: today.toISOString(),
-          routine_task_id: routine.id, // routinesから来たと分かるように
-        });
+          is_routine: true, // routinesから来たと分かるように
+        }).select();
+
+        if (error) {
+          console.error('ルーティン追加エラー:', error);
+          return;
+        }
   
-        // last_generated を更新
         await supabase
           .from('routine_tasks')
-          .update({ last_generated: today.format('YYYY-MM-DD') })
+          .update({ updated_at: today.format('YYYY-MM-DD') })
           .eq('id', routine.id);
+
+        setTodos(prev => [...prev, ...data]);
       }
     }
   };
@@ -275,7 +296,7 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
               <label key={i} style={{ marginRight: 8 }}>
                 <input
                   type="checkbox"
-                  checked={selectedDays.includes(i)}
+                  checked={repeatWeekType.includes(i)}
                   onChange={() => toggleDay(i)}
                 />
                 {dayName}
@@ -313,6 +334,24 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
                 <ul className="space-y-2">
                   {groupedTodos[date]
                     .filter(todo => !todo.is_done)
+                    .filter(todo => !todo.is_routine)
+                    .map(todo => (
+                      <TodoItem
+                        key={todo.id}
+                        todo={todo}
+                        editingId={editingId}
+                        toggleDone={toggleDone}
+                        startEdit={startEdit}
+                        saveEdit={saveEdit}
+                        deleteTodo={deleteTodo}
+                      />
+                    ))}
+                    {groupedTodos[date].some(todo => !todo.is_done && todo.is_routine) && (
+                      <hr className="my-4 border-t border-gray-300" />
+                    )}
+                    {groupedTodos[date]
+                    .filter(todo => !todo.is_done)
+                    .filter(todo => todo.is_routine)
                     .map(todo => (
                       <TodoItem
                         key={todo.id}
@@ -331,6 +370,26 @@ const [selectedDays, setSelectedDays] = useState<number[]>([]); // 週の曜日�
                 <ul className="space-y-2">
                   {groupedTodos[date]
                     .filter(todo => todo.is_done)
+                    .filter(todo => !todo.is_routine)
+                    .map(todo => (
+                      <TodoItem
+                        key={todo.id}
+                        todo={todo}
+                        editingId={editingId}
+                        toggleDone={toggleDone}
+                        startEdit={startEdit}
+                        saveEdit={saveEdit}
+                        deleteTodo={deleteTodo}
+                      />
+                    ))}
+
+                    {groupedTodos[date].some(todo => todo.is_done && todo.is_routine) && (
+                      // <h4 className='text-gray-500 font-semibold mb-2'>ルーティンワーク</h4>
+                      <hr className="my-4 border-t border-gray-300" />
+                    )}
+                    {groupedTodos[date]
+                    .filter(todo => todo.is_done)
+                    .filter(todo => todo.is_routine)
                     .map(todo => (
                       <TodoItem
                         key={todo.id}
