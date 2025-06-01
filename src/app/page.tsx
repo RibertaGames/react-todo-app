@@ -5,6 +5,8 @@ import TodoItem from './components/todoItem';
 import dayjs from 'dayjs';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import RoutineTaskManagerModal from './modal/RoutineTaskModal'
 
 export type Todo = {
   id: number;
@@ -22,6 +24,8 @@ export default function Home() {
   const [date, setDate] = useState<Date | null>(new Date());
   const [repeatType, setRepeatType] = useState<'daily' | 'weekly'>('daily');
   const [repeatWeekType, setRepeatWeekType] = useState<number[]>([]); // 週の曜日（weeklyのみ）
+  const [isHeaderButtonOpen, setHeaderButtonOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // 初回ロード時にTODOを取得（Supabaseから）
   useEffect(() => {
@@ -248,8 +252,42 @@ export default function Home() {
   return (
     <div>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold mb-4">TODOアプリ</h1>
 
+        {/* ヘッダー */}
+        <div className="bg-white border-b shadow-sm px-6 py-4 flex justify-between items-center rounded">
+          <h1 className="text-2xl font-bold text-gray-800">TODOアプリ</h1>
+
+          <div className="relative">
+            <button
+              onClick={() => setHeaderButtonOpen(!isHeaderButtonOpen)}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
+            >
+              設定 ▼
+            </button>
+
+            {isHeaderButtonOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-10">
+                <button
+                  onClick={() => {
+                    setHeaderButtonOpen(false);
+                    setShowSettings(true);
+                  }}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
+                >
+                  設定を開く
+                </button>
+                <button
+                  onClick={() => setHeaderButtonOpen(false)}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
+                >
+                  閉じる
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* タスク登録フォーム */}
         <div className="flex flex-col space-y-2">
             <label>タスク内容</label>
             <input
@@ -280,32 +318,31 @@ export default function Home() {
                 />
                 ルーティン
               </label>
+              {taskType === 'routine' && (
+                <>
+                  <label>繰り返しタイプ</label>
+                  <select value={repeatType} onChange={e => setRepeatType(e.target.value as 'daily' | 'weekly')}>
+                    <option value="daily">毎日</option>
+                    <option value="weekly">毎週</option>
+                  </select>
 
-    {taskType === 'routine' && (
-      <>
-        <label>繰り返しタイプ</label>
-        <select value={repeatType} onChange={e => setRepeatType(e.target.value as 'daily' | 'weekly')}>
-          <option value="daily">毎日</option>
-          <option value="weekly">毎週</option>
-        </select>
-
-        {repeatType === 'weekly' && (
-          <div>
-            <label>曜日を選択</label>
-            {['日', '月', '火', '水', '木', '金', '土'].map((dayName, i) => (
-              <label key={i} style={{ marginRight: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={repeatWeekType.includes(i)}
-                  onChange={() => toggleDay(i)}
-                />
-                {dayName}
-              </label>
-            ))}
-          </div>
-        )}
-      </>
-    )}
+                  {repeatType === 'weekly' && (
+                    <div>
+                      <label>曜日を選択</label>
+                      {['日', '月', '火', '水', '木', '金', '土'].map((dayName, i) => (
+                        <label key={i} style={{ marginRight: 8 }}>
+                          <input
+                            type="checkbox"
+                            checked={repeatWeekType.includes(i)}
+                            onChange={() => toggleDay(i)}
+                          />
+                          {dayName}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
     
             <label>実行日</label>
@@ -407,6 +444,9 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+        {/* 設定モーダル */}
+        <RoutineTaskManagerModal show={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 }
