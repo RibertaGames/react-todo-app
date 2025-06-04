@@ -96,13 +96,24 @@ export default function TodoItem({user_id, todo,setTodos}: TodoItemProps)
           onChange={() => toggleDone(todo.id, todo.is_done)}
           className="w-4 h-4"
         />
-        <span
-          className={`${
-            todo.is_done ? 'line-through text-gray-400' : ''
-          } text-base text-black`}
-        >
-          {todo.text}
-        </span>
+
+        {editingId === todo.id ? (
+              <input
+                type="text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                className="text-gray-600"
+                autoFocus
+              />
+            ) : (
+              <span
+                className={`${
+                  todo.is_done ? 'line-through text-gray-400' : ''
+                } text-base text-black`}
+              >
+                {todo.text}
+              </span>
+         )}
       </div>
 
       <div className="flex gap-2">
