@@ -1,22 +1,27 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { Session } from "@supabase/supabase-js";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [session, setSession] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setSession(session);
     };
     init();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      }
+    );
 
     return () => {
       listener.subscription.unsubscribe();
@@ -24,18 +29,21 @@ export default function LoginPage() {
   }, []);
 
   const handleEmailLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert('ログイン失敗: ' + error.message);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) alert("ログイン失敗: " + error.message);
   };
 
   const handleLoginWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
     });
-  
-    if (error) console.error('ログインエラー:', error.message);
+
+    if (error) console.error("ログインエラー:", error.message);
   };
-  
+
   if (session) {
     return (
       <div className="p-4">

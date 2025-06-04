@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { supabase } from '../../lib/supabaseClient';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { supabase } from "../../lib/supabaseClient";
+import { useEffect, useCallback, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Props = {
   user_id: string;
@@ -13,50 +13,55 @@ type Props = {
 type RoutineTask = {
   id: number;
   text: string;
-  repeat_type: 'daily' | 'weekly' | null;
+  repeat_type: "daily" | "weekly" | null;
   repeat_week_type: number[] | null;
   user_id: string;
 };
 
-export default function RoutineTaskManagerModal({ user_id, show, onClose }: Props) {
+export default function RoutineTaskManagerModal({
+  user_id,
+  show,
+  onClose,
+}: Props) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const WEEKDAYS_JP = ['日', '月', '火', '水', '木', '金', '土'];
+  const WEEKDAYS_JP = ["日", "月", "火", "水", "木", "金", "土"];
 
-  useEffect(() => {
-    if (show) fetchTasks();
-  }, [show]);
-
-  const fetchTasks = async () => {
+  //ルーティンワークを取得
+  const fetchTasks = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('routine_tasks')
-      .select('*')
-      .eq('user_id', user_id)
-      .order('id', { ascending: false });
+      .from("routine_tasks")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("id", { ascending: false });
 
     if (error) console.error(error);
     else setTasks(data as RoutineTask[]);
     setLoading(false);
-  };
+  }, [user_id]);
+
+  useEffect(() => {
+    if (show) fetchTasks();
+  }, [show, fetchTasks]);
 
   const handleDelete = async (id: number) => {
     await supabase
-    .from('routine_tasks')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user_id);
+      .from("routine_tasks")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user_id);
     fetchTasks();
   };
 
   const handleUpdate = async (task: RoutineTask) => {
     await supabase
-    .from('routine_tasks')
-    .update(task)
-    .eq('id', task.id)
-    .eq('user_id', user_id);
+      .from("routine_tasks")
+      .update(task)
+      .eq("id", task.id)
+      .eq("user_id", user_id);
     setEditingTaskId(null);
     fetchTasks();
   };
@@ -64,20 +69,20 @@ export default function RoutineTaskManagerModal({ user_id, show, onClose }: Prop
   const toggleWeekday = (task: RoutineTask, day: number) => {
     if (!task.repeat_week_type) task.repeat_week_type = [];
     const updated = task.repeat_week_type.includes(day)
-      ? task.repeat_week_type.filter(d => d !== day)
+      ? task.repeat_week_type.filter((d) => d !== day)
       : [...task.repeat_week_type, day];
     return { ...task, repeat_week_type: updated };
   };
 
   const formatRepeat = (task: RoutineTask) => {
-    if (task.repeat_type === 'daily') return '毎日';
-    if (task.repeat_type === 'weekly' && task.repeat_week_type) {
+    if (task.repeat_type === "daily") return "毎日";
+    if (task.repeat_type === "weekly" && task.repeat_week_type) {
       return task.repeat_week_type
         .sort((a, b) => a - b)
         .map((i) => WEEKDAYS_JP[i])
-        .join('・');
+        .join("・");
     }
-    return 'なし';
+    return "なし";
   };
 
   return (
@@ -85,7 +90,7 @@ export default function RoutineTaskManagerModal({ user_id, show, onClose }: Prop
       {show && (
         <motion.div
           className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -114,18 +119,25 @@ export default function RoutineTaskManagerModal({ user_id, show, onClose }: Prop
                         onChange={(e) =>
                           setTasks((prev) =>
                             prev.map((t) =>
-                              t.id === task.id ? { ...t, text: e.target.value } : t
+                              t.id === task.id
+                                ? { ...t, text: e.target.value }
+                                : t
                             )
                           )
                         }
                       />
                       <select
-                        value={task.repeat_type || ''}
+                        value={task.repeat_type || ""}
                         onChange={(e) =>
                           setTasks((prev) =>
                             prev.map((t) =>
                               t.id === task.id
-                                ? { ...t, repeat_type: e.target.value as 'daily' | 'weekly' }
+                                ? {
+                                    ...t,
+                                    repeat_type: e.target.value as
+                                      | "daily"
+                                      | "weekly",
+                                  }
                                 : t
                             )
                           )
@@ -135,13 +147,15 @@ export default function RoutineTaskManagerModal({ user_id, show, onClose }: Prop
                         <option value="weekly">毎週</option>
                       </select>
 
-                      {task.repeat_type === 'weekly' && (
+                      {task.repeat_type === "weekly" && (
                         <div>
                           {WEEKDAYS_JP.map((d, i) => (
                             <label key={i} className="mr-2">
                               <input
                                 type="checkbox"
-                                checked={task.repeat_week_type?.includes(i) || false}
+                                checked={
+                                  task.repeat_week_type?.includes(i) || false
+                                }
                                 onChange={() =>
                                   setTasks((prev) =>
                                     prev.map((t) =>
@@ -172,7 +186,10 @@ export default function RoutineTaskManagerModal({ user_id, show, onClose }: Prop
                       </div>
                     </div>
                   ) : (
-                    <div key={task.id} className="border p-4 rounded flex justify-between items-center">
+                    <div
+                      key={task.id}
+                      className="border p-4 rounded flex justify-between items-center"
+                    >
                       <div>
                         <p className="font-semibold">{task.text}</p>
                         <p className="text-sm text-gray-500">

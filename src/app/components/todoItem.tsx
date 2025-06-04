@@ -1,8 +1,8 @@
-'use client';
-import React from 'react';
-import { useState } from 'react';
-import { Todo } from '../page';
-import { supabase } from '../../lib/supabaseClient';
+"use client";
+import React from "react";
+import { useState } from "react";
+import { Todo } from "../page";
+import { supabase } from "../../lib/supabaseClient";
 
 type TodoItemProps = {
   user_id: string;
@@ -10,30 +10,29 @@ type TodoItemProps = {
   setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
 };
 
-export default function TodoItem({user_id, todo,setTodos}: TodoItemProps) 
-{
+export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
 
   // TODO完了機能
   const toggleDone = async (id: number, currentStatus: boolean) => {
-    console.log(id,currentStatus);
+    console.log(id, currentStatus);
     const { data, error } = await supabase
-      .from('todos')
+      .from("todos")
       .update({ is_done: !currentStatus })
-      .eq('id', id)
-      .eq('user_id', user_id)
+      .eq("id", id)
+      .eq("user_id", user_id)
       .select();
-  
+
     if (error) {
-      console.error('更新エラー:', error);
+      console.error("更新エラー:", error);
       return;
     }
-  
+
     if (data) {
       // 状態更新
-      setTodos(prev =>
-        prev.map(todo =>
+      setTodos((prev) =>
+        prev.map((todo) =>
           todo.id === id ? { ...todo, is_done: !currentStatus } : todo
         )
       );
@@ -49,24 +48,24 @@ export default function TodoItem({user_id, todo,setTodos}: TodoItemProps)
   //編集の保存機能
   const saveEdit = async () => {
     if (!text.trim() || editingId === null) return;
-  
+
     const { data, error } = await supabase
-      .from('todos')
+      .from("todos")
       .update({ text })
-      .eq('id', editingId)
-      .eq('user_id', user_id)
+      .eq("id", editingId)
+      .eq("user_id", user_id)
       .select();
-  
+
     if (error) {
-      console.error('更新エラー:', error);
+      console.error("更新エラー:", error);
       return;
     }
-  
+
     if (data) {
-      setTodos(prev =>
-        prev.map(todo => (todo.id === editingId ? data[0] : todo))
+      setTodos((prev) =>
+        prev.map((todo) => (todo.id === editingId ? data[0] : todo))
       );
-      setText('');
+      setText("");
       setEditingId(null);
     }
   };
@@ -74,17 +73,17 @@ export default function TodoItem({user_id, todo,setTodos}: TodoItemProps)
   //削除機能
   const deleteTodo = async (id: number) => {
     const { error } = await supabase
-      .from('todos')
+      .from("todos")
       .delete()
-      .eq('id', id)
-      .eq('user_id', user_id);
-  
+      .eq("id", id)
+      .eq("user_id", user_id);
+
     if (error) {
-      console.error('削除エラー:', error);
+      console.error("削除エラー:", error);
       return;
     }
-  
-    setTodos(prev => prev.filter(todo => todo.id !== id));
+
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
   return (
@@ -98,22 +97,22 @@ export default function TodoItem({user_id, todo,setTodos}: TodoItemProps)
         />
 
         {editingId === todo.id ? (
-              <input
-                type="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="text-gray-600"
-                autoFocus
-              />
-            ) : (
-              <span
-                className={`${
-                  todo.is_done ? 'line-through text-gray-400' : ''
-                } text-base text-black`}
-              >
-                {todo.text}
-              </span>
-         )}
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="text-gray-600"
+            autoFocus
+          />
+        ) : (
+          <span
+            className={`${
+              todo.is_done ? "line-through text-gray-400" : ""
+            } text-base text-black`}
+          >
+            {todo.text}
+          </span>
+        )}
       </div>
 
       <div className="flex gap-2">
