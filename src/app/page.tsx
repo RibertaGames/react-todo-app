@@ -5,8 +5,8 @@ import TodoItem from './components/todoItem';
 import dayjs from 'dayjs';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { motion, AnimatePresence } from 'framer-motion';
 import RoutineTaskManagerModal from './modal/RoutineTaskModal'
+import LoginPage from './LoginPage';
 
 export type Todo = {
   id: number;
@@ -17,9 +17,9 @@ export type Todo = {
 };
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [text, setText] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [taskType, setTaskType] = useState<'todo' | 'routine'>('todo');
   const [date, setDate] = useState<Date | null>(new Date());
   const [repeatType, setRepeatType] = useState<'daily' | 'weekly'>('daily');
@@ -27,17 +27,34 @@ export default function Home() {
   const [isHeaderButtonOpen, setHeaderButtonOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // 初回ロード時にTODOを取得（Supabaseから）
+  // 初回ロード
   useEffect(() => {
-    generateRoutineTodos();
-    fetchTodos();
+    fetchUser();
   }, []);
+
+  // Todoデータ取得
+  useEffect(() => {
+    if (user) {
+      generateRoutineTodos();
+      fetchTodos();
+    }
+  }, [user]);
+
+  const fetchUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (data?.user) {
+      setUser(data.user);
+    }
+  };
 
   //TODOを取得
   const fetchTodos = async () => {
+    console.log(user)
+    if (!user || !user.id) return;
     const { data, error } = await supabase
       .from('todos')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -52,7 +69,7 @@ export default function Home() {
 
   //TODO追加機能
   const addTodo = async () => {
-    if (!text.trim() || !date) return;
+    if (!text.trim() || !date || !user || !user.id) return;
 
     if (taskType === 'todo') {
       const { data, error} = await supabase.from('todos').insert([
@@ -60,6 +77,7 @@ export default function Home() {
           text,
           is_done: false,
           created_at: dayjs(date).toISOString(),
+          user_id: user.id,
         },
       ]).select();
 
@@ -84,6 +102,7 @@ export default function Home() {
           updated_at: null,
           repeat_type: 'weekly',
           repeat_week_type: repeatWeekType,
+          user_id: user.id,
         }]
       : [{
           text,
@@ -91,6 +110,7 @@ export default function Home() {
           updated_at: null,
           repeat_type: 'daily',
           repeat_week_type: null,
+          user_id: user.id,
         }];
 
       const { data, error } = await supabase.from('routine_tasks').insert(inserts).select();
@@ -108,75 +128,6 @@ export default function Home() {
 
     setText('');
     setDate(new Date());
-  };
-
-  // TODO完了機能
-  const toggleDone = async (id: number, currentStatus: boolean) => {
-    console.log(id,currentStatus);
-    const { data, error } = await supabase
-      .from('todos')
-      .update({ is_done: !currentStatus })
-      .eq('id', id)
-      .select();
-  
-    if (error) {
-      console.error('更新エラー:', error);
-      return;
-    }
-  
-    if (data) {
-      // 状態更新
-      setTodos(prev =>
-        prev.map(todo =>
-          todo.id === id ? { ...todo, is_done: !currentStatus } : todo
-        )
-      );
-    }
-  };
-
-  //編集機能
-  const startEdit = (todo: Todo) => {
-    setEditingId(todo.id);
-    setText(todo.text);
-  };
-
-  //編集の保存機能
-  const saveEdit = async () => {
-    if (!text.trim() || editingId === null) return;
-  
-    const { data, error } = await supabase
-      .from('todos')
-      .update({ text })
-      .eq('id', editingId)
-      .select();
-  
-    if (error) {
-      console.error('更新エラー:', error);
-      return;
-    }
-  
-    if (data) {
-      setTodos(prev =>
-        prev.map(todo => (todo.id === editingId ? data[0] : todo))
-      );
-      setText('');
-      setEditingId(null);
-    }
-  };
-
-  //削除機能
-  const deleteTodo = async (id: number) => {
-    const { error } = await supabase
-      .from('todos')
-      .delete()
-      .eq('id', id);
-  
-    if (error) {
-      console.error('削除エラー:', error);
-      return;
-    }
-  
-    setTodos(prev => prev.filter(todo => todo.id !== id));
   };
 
   // グループ化
@@ -201,13 +152,15 @@ export default function Home() {
 
   // ルーティンワーク処理
   const generateRoutineTodos = async () => {
+    if(!user || !user.id) return;
     const today = dayjs().startOf('day'); // 今日の日付を0時に固定（重複防止用）
     const weekday = today.day(); // 今日の曜日（0=日曜, 1=月曜,...）
   
     // ルーティンタスク一覧を取得
     const { data: routines, error } = await supabase
       .from('routine_tasks')
-      .select('*');
+      .select('*')
+      .eq('user_id', user.id);
   
     if (error) {
       console.error('ルーティン取得エラー:', error);
@@ -232,6 +185,7 @@ export default function Home() {
           is_done: false,
           created_at: today.toISOString(),
           is_routine: true, // routinesから来たと分かるように
+          user_id: user.id,
         }).select();
 
         if (error) {
@@ -242,6 +196,7 @@ export default function Home() {
         await supabase
           .from('routine_tasks')
           .update({ updated_at: today.format('YYYY-MM-DD') })
+          .eq('user_id', user.id)
           .eq('id', routine.id);
 
         setTodos(prev => [...prev, ...data]);
@@ -249,9 +204,13 @@ export default function Home() {
     }
   };
 
+  if (!user) {
+    return <LoginPage />; // ← ログインしてない場合はこちらを表示
+  }
+
   return (
     <div>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 ">
 
         {/* ヘッダー */}
         <div className="bg-white border-b shadow-sm px-6 py-4 flex justify-between items-center rounded">
@@ -275,6 +234,15 @@ export default function Home() {
                   className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
                 >
                   設定を開く
+                </button>
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setUser(null);
+                  }}
+                  className="text-sm text-gray-500 underline ml-4"
+                >
+                  ログアウト
                 </button>
                 <button
                   onClick={() => setHeaderButtonOpen(false)}
@@ -318,25 +286,30 @@ export default function Home() {
                 />
                 ルーティン
               </label>
+            </div>
+
+            <div className="gap-4">
               {taskType === 'routine' && (
                 <>
-                  <label>繰り返しタイプ</label>
-                  <select value={repeatType} onChange={e => setRepeatType(e.target.value as 'daily' | 'weekly')}>
-                    <option value="daily">毎日</option>
-                    <option value="weekly">毎週</option>
-                  </select>
+                  <div className='py-1'>
+                    <label>繰り返し: </label>
+                    <select value={repeatType} onChange={e => setRepeatType(e.target.value as 'daily' | 'weekly')}>
+                      <option  className='text-gray-800' value="daily">毎日</option>
+                      <option  className='text-gray-800' value="weekly">毎週</option>
+                    </select>
+                  </div>
 
                   {repeatType === 'weekly' && (
                     <div>
-                      <label>曜日を選択</label>
+                      <label>曜日を選択: </label>
                       {['日', '月', '火', '水', '木', '金', '土'].map((dayName, i) => (
-                        <label key={i} style={{ marginRight: 8 }}>
+                        <label key={i} style={{ marginRight: 15 }}>
                           <input
                             type="checkbox"
                             checked={repeatWeekType.includes(i)}
                             onChange={() => toggleDay(i)}
                           />
-                          {dayName}
+                          {" " + dayName}
                         </label>
                       ))}
                     </div>
@@ -364,7 +337,9 @@ export default function Home() {
         {/* 日付グループごとに表示 */}
         {sortedDates.map(date => (
           <div key={date} className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-bold mb-2">{dayjs(date).format('YYYY年MM月DD日')}</h2>
+            <div className='flex gap-4'>
+              <h2 className="text-lg font-bold mb-2 text-gray-800">{dayjs(date).format('YYYY年MM月DD日')}</h2>
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <h3 className="text-gray-600 font-semibold mb-2">未完了</h3>
@@ -375,12 +350,9 @@ export default function Home() {
                     .map(todo => (
                       <TodoItem
                         key={todo.id}
+                        user_id={user.id}
                         todo={todo}
-                        editingId={editingId}
-                        toggleDone={toggleDone}
-                        startEdit={startEdit}
-                        saveEdit={saveEdit}
-                        deleteTodo={deleteTodo}
+                        setTodos={setTodos}
                       />
                     ))}
                     {groupedTodos[date].some(todo => !todo.is_done && todo.is_routine) && (
@@ -392,12 +364,9 @@ export default function Home() {
                     .map(todo => (
                       <TodoItem
                         key={todo.id}
+                        user_id={user.id}
                         todo={todo}
-                        editingId={editingId}
-                        toggleDone={toggleDone}
-                        startEdit={startEdit}
-                        saveEdit={saveEdit}
-                        deleteTodo={deleteTodo}
+                        setTodos={setTodos}
                       />
                     ))}
                 </ul>
@@ -411,12 +380,9 @@ export default function Home() {
                     .map(todo => (
                       <TodoItem
                         key={todo.id}
+                        user_id={user.id}
                         todo={todo}
-                        editingId={editingId}
-                        toggleDone={toggleDone}
-                        startEdit={startEdit}
-                        saveEdit={saveEdit}
-                        deleteTodo={deleteTodo}
+                        setTodos={setTodos}
                       />
                     ))}
 
@@ -430,12 +396,9 @@ export default function Home() {
                     .map(todo => (
                       <TodoItem
                         key={todo.id}
+                        user_id={user.id}
                         todo={todo}
-                        editingId={editingId}
-                        toggleDone={toggleDone}
-                        startEdit={startEdit}
-                        saveEdit={saveEdit}
-                        deleteTodo={deleteTodo}
+                        setTodos={setTodos}
                       />
                     ))}
                 </ul>
@@ -446,7 +409,7 @@ export default function Home() {
       </div>
 
         {/* 設定モーダル */}
-        <RoutineTaskManagerModal show={showSettings} onClose={() => setShowSettings(false)} />
+        <RoutineTaskManagerModal user_id={user.id} show={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 }

@@ -1,24 +1,92 @@
 'use client';
 import React from 'react';
+import { useState } from 'react';
 import { Todo } from '../page';
+import { supabase } from '../../lib/supabaseClient';
 
 type TodoItemProps = {
+  user_id: string;
   todo: Todo;
-  editingId: number | null;
-  toggleDone: (id: number, current: boolean) => void;
-  startEdit: (todo: Todo) => void;
-  saveEdit: () => void;
-  deleteTodo: (id: number) => void;
+  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
 };
 
-export default function TodoItem({
-  todo,
-  editingId,
-  toggleDone,
-  startEdit,
-  saveEdit,
-  deleteTodo,
-}: TodoItemProps) {
+export default function TodoItem({user_id, todo,setTodos}: TodoItemProps) 
+{
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [text, setText] = useState('');
+
+  // TODO完了機能
+  const toggleDone = async (id: number, currentStatus: boolean) => {
+    console.log(id,currentStatus);
+    const { data, error } = await supabase
+      .from('todos')
+      .update({ is_done: !currentStatus })
+      .eq('id', id)
+      .eq('user_id', user_id)
+      .select();
+  
+    if (error) {
+      console.error('更新エラー:', error);
+      return;
+    }
+  
+    if (data) {
+      // 状態更新
+      setTodos(prev =>
+        prev.map(todo =>
+          todo.id === id ? { ...todo, is_done: !currentStatus } : todo
+        )
+      );
+    }
+  };
+
+  //編集機能
+  const startEdit = (todo: Todo) => {
+    setEditingId(todo.id);
+    setText(todo.text);
+  };
+
+  //編集の保存機能
+  const saveEdit = async () => {
+    if (!text.trim() || editingId === null) return;
+  
+    const { data, error } = await supabase
+      .from('todos')
+      .update({ text })
+      .eq('id', editingId)
+      .eq('user_id', user_id)
+      .select();
+  
+    if (error) {
+      console.error('更新エラー:', error);
+      return;
+    }
+  
+    if (data) {
+      setTodos(prev =>
+        prev.map(todo => (todo.id === editingId ? data[0] : todo))
+      );
+      setText('');
+      setEditingId(null);
+    }
+  };
+
+  //削除機能
+  const deleteTodo = async (id: number) => {
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user_id);
+  
+    if (error) {
+      console.error('削除エラー:', error);
+      return;
+    }
+  
+    setTodos(prev => prev.filter(todo => todo.id !== id));
+  };
+
   return (
     <li className="flex items-center justify-between bg-white shadow-sm rounded p-3 border border-gray-200">
       <div className="flex items-center gap-2">

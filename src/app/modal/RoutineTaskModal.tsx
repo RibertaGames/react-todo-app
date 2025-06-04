@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 type Props = {
+  user_id: string;
   show: boolean;
   onClose: () => void;
 };
@@ -14,9 +15,10 @@ type RoutineTask = {
   text: string;
   repeat_type: 'daily' | 'weekly' | null;
   repeat_week_type: number[] | null;
+  user_id: string;
 };
 
-export default function RoutineTaskManagerModal({ show, onClose }: Props) {
+export default function RoutineTaskManagerModal({ user_id, show, onClose }: Props) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,7 @@ export default function RoutineTaskManagerModal({ show, onClose }: Props) {
     const { data, error } = await supabase
       .from('routine_tasks')
       .select('*')
+      .eq('user_id', user_id)
       .order('id', { ascending: false });
 
     if (error) console.error(error);
@@ -40,12 +43,20 @@ export default function RoutineTaskManagerModal({ show, onClose }: Props) {
   };
 
   const handleDelete = async (id: number) => {
-    await supabase.from('routine_tasks').delete().eq('id', id);
+    await supabase
+    .from('routine_tasks')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user_id);
     fetchTasks();
   };
 
   const handleUpdate = async (task: RoutineTask) => {
-    await supabase.from('routine_tasks').update(task).eq('id', task.id);
+    await supabase
+    .from('routine_tasks')
+    .update(task)
+    .eq('id', task.id)
+    .eq('user_id', user_id);
     setEditingTaskId(null);
     fetchTasks();
   };
