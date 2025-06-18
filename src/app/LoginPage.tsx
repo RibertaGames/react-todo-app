@@ -4,9 +4,16 @@ import { supabase } from "../lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [session, setSession] = useState<Session | null>(null);
+
+  type OAuthProvider =
+    | "google"
+    | "github"
+    | "facebook"
+    | "twitter"
+    | "apple"
+    | "discord"
+    | "slack";
 
   useEffect(() => {
     const init = async () => {
@@ -28,17 +35,7 @@ export default function LoginPage() {
     };
   }, []);
 
-  const handleEmailLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) alert("ログイン失敗: " + error.message);
-  };
-
-  const handleOAuthLogin = async (
-    provider: "google" | "github" | "facebook" | "twitter" | "apple" | "discord"
-  ) => {
+  const handleOAuthLogin = async (provider: OAuthProvider) => {
     const { error } = await supabase.auth.signInWithOAuth({ provider });
     if (error) console.error(`${provider} ログインエラー:`, error.message);
   };
@@ -109,7 +106,7 @@ export default function LoginPage() {
       ),
     },
     {
-      id: "x",
+      id: "twitter",
       name: "X",
       color: "bg-black",
       svg: (
@@ -209,8 +206,8 @@ export default function LoginPage() {
           {providers.map((p) => (
             <button
               key={p.id}
-              onClick={() => handleOAuthLogin(p.id as any)}
-              className={`${p.color} text-white w-full py-2 rounded flex items-center justify-center`}
+              onClick={() => handleOAuthLogin(p.id as OAuthProvider)}
+              className={`${p.color} hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:ring-${p.color} text-white w-full py-2 rounded flex items-center justify-center`}
             >
               {p.svg}
               {p.name}
