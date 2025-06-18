@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { User } from "@supabase/supabase-js";
 import TodoItem from "./components/todoItem";
+import UserProfile from "./components/UserProfile";
 import dayjs from "dayjs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -27,6 +28,7 @@ export default function Home() {
   const [repeatWeekType, setRepeatWeekType] = useState<number[]>([]); // 週の曜日（weeklyのみ）
   const [isHeaderButtonOpen, setHeaderButtonOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
 
   // 初回ロード
   useEffect(() => {
@@ -248,6 +250,15 @@ export default function Home() {
                   設定を開く
                 </button>
                 <button
+                  onClick={() => {
+                    setHeaderButtonOpen(false);
+                    setShowUserProfile(true);
+                  }}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
+                >
+                  プロファイルを開く
+                </button>
+                <button
                   onClick={async () => {
                     await supabase.auth.signOut();
                     setUser(null);
@@ -441,6 +452,10 @@ export default function Home() {
         show={showSettings}
         onClose={() => setShowSettings(false)}
       />
+      {/* ユーザープロフィール */}
+      {showUserProfile && (
+        <UserProfile user={user} onClose={() => setShowUserProfile(false)} />
+      )}
     </div>
   );
 }
