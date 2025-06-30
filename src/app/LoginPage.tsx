@@ -159,7 +159,7 @@ export default function LoginPage() {
       ),
     },
     {
-      id: "slack",
+      id: "slack_oidc",
       name: "Slack",
       color: "bg-purple-600",
       svg: (
