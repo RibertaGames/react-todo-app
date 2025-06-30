@@ -207,7 +207,7 @@ export default function LoginPage() {
             <button
               key={p.id}
               onClick={() => handleOAuthLogin(p.id as OAuthProvider)}
-              className={`${p.color} hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:ring-${p.color} text-white w-full py-2 rounded flex items-center justify-center`}
+              className={`${p.color} hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:ring-${p.color} text-white w-full py-2 rounded flex items-center justify-center cursor-pointer`}
             >
               {p.svg}
               {p.name}
