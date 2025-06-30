@@ -453,9 +453,9 @@ export default function Home() {
         onClose={() => setShowSettings(false)}
       />
       {/* ユーザープロフィール */}
-      {showUserProfile && (
+      {/* {showUserProfile && (
         <UserProfile user={user} onClose={() => setShowUserProfile(false)} />
-      )}
+      )} */}
     </div>
   );
 }

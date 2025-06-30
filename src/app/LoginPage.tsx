@@ -190,22 +190,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-sm">
-        <h1 className="text-xl font-bold mb-4 text-gray-800">ログイン</h1>
+    <div className="bg-gray-100">
+      <div className="p-6 space-y-6">
+        {/* ヘッダー */}
+        <div className="bg-white border-b px-6 py-4 flex justify-between items-center rounded">
+          <h1 className="text-2xl font-bold text-gray-800">TODOアプリ</h1>
+        </div>
+      </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded shadow-md w-full max-w-sm">
+          <h1 className="text-xl font-bold mb-4 text-gray-800">ログイン</h1>
 
-        <hr className="my-4" />
-        <div className="space-y-2">
-          {providers.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => handleOAuthLogin(p.id as OAuthProvider)}
-              className={`${p.color} hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:ring-${p.color} text-white w-full py-2 rounded flex items-center justify-center cursor-pointer`}
-            >
-              {p.svg}
-              {p.name}
-            </button>
-          ))}
+          <hr className="my-4" />
+          <div className="space-y-2">
+            {providers.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => handleOAuthLogin(p.id as OAuthProvider)}
+                className={`${p.color} hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:ring-${p.color} text-white w-full py-2 rounded flex items-center justify-center cursor-pointer`}
+              >
+                {p.svg}
+                {p.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
