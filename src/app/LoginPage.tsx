@@ -6,14 +6,7 @@ import { Session } from "@supabase/supabase-js";
 export default function LoginPage() {
   const [session, setSession] = useState<Session | null>(null);
 
-  type OAuthProvider =
-    | "google"
-    | "github"
-    | "facebook"
-    | "twitter"
-    | "apple"
-    | "discord"
-    | "slack";
+  type OAuthProvider = "google" | "github" | "twitter" | "discord" | "slack";
 
   useEffect(() => {
     const init = async () => {
@@ -86,25 +79,25 @@ export default function LoginPage() {
         </svg>
       ),
     },
-    {
-      id: "facebook",
-      name: "Facebook",
-      color: "bg-blue-500",
-      svg: (
-        <svg
-          className="w-5 h-5 mr-2"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <rect width="24" height="24" fill="white" rx="12" /> {/* 背景丸白 */}
-          <path
-            fill="#1877F2"
-            d="M22.675 0h-21.35C.592 0 0 .592 0 1.326v21.348C0 23.408.592 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.41c0-3.1 1.894-4.788 4.659-4.788 1.325 0 2.466.099 2.796.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.763v2.313h3.59l-.467 3.622h-3.123V24h6.116c.73 0 1.324-.592 1.324-1.326V1.326C24 .592 23.408 0 22.675 0z"
-          />
-        </svg>
-      ),
-    },
+    // {
+    //   id: "facebook",
+    //   name: "Facebook",
+    //   color: "bg-blue-500",
+    //   svg: (
+    //     <svg
+    //       className="w-5 h-5 mr-2"
+    //       viewBox="0 0 24 24"
+    //       fill="none"
+    //       xmlns="http://www.w3.org/2000/svg"
+    //     >
+    //       <rect width="24" height="24" fill="white" rx="12" /> {/* 背景丸白 */}
+    //       <path
+    //         fill="#1877F2"
+    //         d="M22.675 0h-21.35C.592 0 0 .592 0 1.326v21.348C0 23.408.592 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.41c0-3.1 1.894-4.788 4.659-4.788 1.325 0 2.466.099 2.796.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.763v2.313h3.59l-.467 3.622h-3.123V24h6.116c.73 0 1.324-.592 1.324-1.326V1.326C24 .592 23.408 0 22.675 0z"
+    //       />
+    //     </svg>
+    //   ),
+    // },
     {
       id: "twitter",
       name: "X",
