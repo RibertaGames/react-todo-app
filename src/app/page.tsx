@@ -3,12 +3,13 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { User } from "@supabase/supabase-js";
 import TodoItem from "./components/todoItem";
-import UserProfile from "./components/UserProfile";
+// import UserProfile from "./components/UserProfile";
 import dayjs from "dayjs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import RoutineTaskManagerModal from "./modal/RoutineTaskModal";
 import LoginPage from "./LoginPage";
+import CryptoJS from "crypto-js";
 
 export type Todo = {
   id: number;
@@ -28,7 +29,7 @@ export default function Home() {
   const [repeatWeekType, setRepeatWeekType] = useState<number[]>([]); // 週の曜日（weeklyのみ）
   const [isHeaderButtonOpen, setHeaderButtonOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showUserProfile, setShowUserProfile] = useState(false);
+  // const [showUserProfile, setShowUserProfile] = useState(false);
 
   // 初回ロード
   useEffect(() => {
@@ -98,6 +99,7 @@ export default function Home() {
     const fetchTodos = async () => {
       console.log(user);
       if (!user || !user.id) return;
+
       const { data, error } = await supabase
         .from("todos")
         .select("*")
@@ -130,13 +132,15 @@ export default function Home() {
   //TODO追加機能
   const addTodo = async () => {
     if (!text.trim() || !date || !user || !user.id) return;
+    // 暗号化
+    const encryptedText = encryptText(text.trim());
 
     if (taskType === "todo") {
       const { data, error } = await supabase
         .from("todos")
         .insert([
           {
-            text,
+            encryptedText,
             is_done: false,
             created_at: dayjs(date).toISOString(),
             user_id: user.id,
@@ -160,7 +164,7 @@ export default function Home() {
         repeatType === "weekly"
           ? [
               {
-                text,
+                encryptedText,
                 created_at: dayjs(date).toISOString(),
                 updated_at: null,
                 repeat_type: "weekly",
@@ -170,7 +174,7 @@ export default function Home() {
             ]
           : [
               {
-                text,
+                encryptedText,
                 created_at: dayjs(date).toISOString(),
                 updated_at: null,
                 repeat_type: "daily",
@@ -219,6 +223,12 @@ export default function Home() {
     );
   };
 
+  // 暗号化
+  function encryptText(plainText: string): string {
+    if (!user || !user.id) return plainText;
+    return CryptoJS.AES.encrypt(plainText, user.id).toString();
+  }
+
   if (!user) {
     return <LoginPage />; // ← ログインしてない場合はこちらを表示
   }
@@ -249,7 +259,7 @@ export default function Home() {
                 >
                   設定を開く
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     setHeaderButtonOpen(false);
                     setShowUserProfile(true);
@@ -257,7 +267,7 @@ export default function Home() {
                   className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
                 >
                   プロファイルを開く
-                </button>
+                </button> */}
                 <button
                   onClick={async () => {
                     await supabase.auth.signOut();

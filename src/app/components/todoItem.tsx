@@ -3,6 +3,7 @@ import React from "react";
 import { useState } from "react";
 import { Todo } from "../page";
 import { supabase } from "../../lib/supabaseClient";
+import CryptoJS from "crypto-js";
 
 type TodoItemProps = {
   user_id: string;
@@ -86,6 +87,13 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
+  // 復号
+  function decryptText(text: string): string {
+    if (!user_id) return "";
+    const bytes = CryptoJS.AES.decrypt(text, user_id);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  }
+
   return (
     <li className="flex items-center justify-between bg-white shadow-sm rounded p-3 border border-gray-200">
       <div className="flex items-center gap-2">
@@ -110,7 +118,7 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
               todo.is_done ? "line-through text-gray-400" : ""
             } text-base text-black`}
           >
-            {todo.text}
+            {decryptText(todo.text)}
           </span>
         )}
       </div>
