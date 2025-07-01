@@ -29,7 +29,12 @@ export default function LoginPage() {
   }, []);
 
   const handleOAuthLogin = async (provider: OAuthProvider) => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      // options: {
+      //   redirectTo: `http://example.com/auth/callback`,
+      // },
+    });
     if (error) console.error(`${provider} ログインエラー:`, error.message);
   };
 

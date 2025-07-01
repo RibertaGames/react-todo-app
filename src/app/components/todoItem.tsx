@@ -3,7 +3,7 @@ import React from "react";
 import { useState } from "react";
 import { Todo } from "../page";
 import { supabase } from "../../lib/supabaseClient";
-import CryptoJS from "crypto-js";
+import { encryptText } from "./CryptoJS";
 
 type TodoItemProps = {
   user_id: string;
@@ -50,9 +50,10 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
   const saveEdit = async () => {
     if (!text.trim() || editingId === null) return;
 
+    const encryptedText = encryptText(text.trim(), user_id);
     const { data, error } = await supabase
       .from("todos")
-      .update({ text })
+      .update({ text: encryptedText })
       .eq("id", editingId)
       .eq("user_id", user_id)
       .select();
@@ -87,15 +88,6 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
-  // 復号
-  function decryptText(text: string): string {
-    if (!user_id) return "";
-    const bytes = CryptoJS.AES.decrypt(text, user_id);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-    if (!decrypted) return text;
-    return JSON.parse(decrypted);
-  }
-
   return (
     <li className="flex items-center justify-between bg-white shadow-sm rounded p-3 border border-gray-200">
       <div className="flex items-center gap-2">
@@ -120,7 +112,7 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
               todo.is_done ? "line-through text-gray-400" : ""
             } text-base text-black`}
           >
-            {decryptText(todo.text)}
+            {todo.text}
           </span>
         )}
       </div>

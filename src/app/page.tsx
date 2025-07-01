@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import RoutineTaskManagerModal from "./modal/RoutineTaskModal";
 import LoginPage from "./LoginPage";
-import CryptoJS from "crypto-js";
+import { encryptText, decryptText } from "./components/CryptoJS";
 
 export type Todo = {
   id: number;
@@ -97,7 +97,6 @@ export default function Home() {
   useEffect(() => {
     //TODOを取得
     const fetchTodos = async () => {
-      console.log(user);
       if (!user || !user.id) return;
 
       const { data, error } = await supabase
@@ -112,7 +111,11 @@ export default function Home() {
       }
 
       if (data) {
-        setTodos(data);
+        const decryptedData = (data as Todo[]).map((todo) => ({
+          ...todo,
+          text: decryptText(todo.text, user.id),
+        }));
+        setTodos(decryptedData);
       }
     };
 
@@ -133,7 +136,7 @@ export default function Home() {
   const addTodo = async () => {
     if (!text.trim() || !date || !user || !user.id) return;
     // 暗号化
-    const encryptedText = encryptText(text.trim());
+    const encryptedText = encryptText(text.trim(), user.id);
 
     if (taskType === "todo") {
       const { data, error } = await supabase
@@ -222,12 +225,6 @@ export default function Home() {
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
   };
-
-  // 暗号化
-  function encryptText(plainText: string): string {
-    if (!user || !user.id) return plainText;
-    return CryptoJS.AES.encrypt(JSON.stringify(plainText), user.id).toString();
-  }
 
   if (!user) {
     return <LoginPage />; // ← ログインしてない場合はこちらを表示

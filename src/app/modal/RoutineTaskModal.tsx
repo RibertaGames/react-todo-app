@@ -3,6 +3,7 @@
 import { supabase } from "../../lib/supabaseClient";
 import { useEffect, useCallback, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { encryptText, decryptText } from "../components/CryptoJS";
 
 type Props = {
   user_id: string;
@@ -38,8 +39,16 @@ export default function RoutineTaskManagerModal({
       .eq("user_id", user_id)
       .order("id", { ascending: false });
 
-    if (error) console.error(error);
-    else setTasks(data as RoutineTask[]);
+    if (error) {
+      console.error(error);
+    } else {
+      // 複合化
+      const decryptedData = (data as RoutineTask[]).map((task) => ({
+        ...task,
+        text: decryptText(task.text, user_id),
+      }));
+      setTasks(decryptedData);
+    }
     setLoading(false);
   }, [user_id]);
 
@@ -48,22 +57,31 @@ export default function RoutineTaskManagerModal({
   }, [show, fetchTasks]);
 
   const handleDelete = async (id: number) => {
-    await supabase
+    const { error } = await supabase
       .from("routine_tasks")
       .delete()
       .eq("id", id)
       .eq("user_id", user_id);
-    fetchTasks();
+
+    if (error) {
+      console.error("削除エラー:", error);
+      return;
+    }
+    setTasks((tasks) => tasks.filter((task) => task.id !== id));
   };
 
   const handleUpdate = async (task: RoutineTask) => {
+    setTasks((tasks) =>
+      tasks.map((t) => (t.id == task.id ? { ...t, text: task.text } : t))
+    );
+    //暗号化
+    task.text = encryptText(task.text.trim(), user_id);
     await supabase
       .from("routine_tasks")
       .update(task)
       .eq("id", task.id)
       .eq("user_id", user_id);
     setEditingTaskId(null);
-    fetchTasks();
   };
 
   const toggleWeekday = (task: RoutineTask, day: number) => {
@@ -117,11 +135,11 @@ export default function RoutineTaskManagerModal({
                         className="border px-2 py-1 w-full"
                         value={task.text}
                         onChange={(e) =>
-                          setTasks((prev) =>
-                            prev.map((t) =>
-                              t.id === task.id
-                                ? { ...t, text: e.target.value }
-                                : t
+                          setTasks((tasks) =>
+                            tasks.map((task) =>
+                              task.id === task.id
+                                ? { ...task, text: e.target.value }
+                                : task
                             )
                           )
                         }
@@ -130,15 +148,15 @@ export default function RoutineTaskManagerModal({
                         value={task.repeat_type || ""}
                         onChange={(e) =>
                           setTasks((prev) =>
-                            prev.map((t) =>
-                              t.id === task.id
+                            prev.map((task) =>
+                              task.id === task.id
                                 ? {
-                                    ...t,
+                                    ...task,
                                     repeat_type: e.target.value as
                                       | "daily"
                                       | "weekly",
                                   }
-                                : t
+                                : task
                             )
                           )
                         }
