@@ -64,6 +64,7 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
     }
 
     if (data) {
+      data[0].text = text.trim();
       setTodos((prev) =>
         prev.map((todo) => (todo.id === editingId ? data[0] : todo))
       );

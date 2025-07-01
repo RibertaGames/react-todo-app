@@ -71,17 +71,24 @@ export default function RoutineTaskManagerModal({
   };
 
   const handleUpdate = async (task: RoutineTask) => {
-    setTasks((tasks) =>
-      tasks.map((t) => (t.id == task.id ? { ...t, text: task.text } : t))
-    );
+    const taskPlainText = task.text;
     //暗号化
     task.text = encryptText(task.text.trim(), user_id);
-    await supabase
+    const { error } = await supabase
       .from("routine_tasks")
       .update(task)
       .eq("id", task.id)
       .eq("user_id", user_id);
     setEditingTaskId(null);
+
+    if (error) {
+      console.error("更新エラー:", error);
+      return;
+    }
+
+    setTasks((tasks) =>
+      tasks.map((t) => (t.id == task.id ? { ...t, text: taskPlainText } : t))
+    );
   };
 
   const toggleWeekday = (task: RoutineTask, day: number) => {
