@@ -30,6 +30,8 @@ body {
 button,
 [role="button"],
 .clickable,
-.toggle {
+.toggle
+input[type="checkbox"],
+input[type="radio"] {
   cursor: pointer;
 }
