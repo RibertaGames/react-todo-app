@@ -226,7 +226,7 @@ export default function Home() {
   // 暗号化
   function encryptText(plainText: string): string {
     if (!user || !user.id) return plainText;
-    return CryptoJS.AES.encrypt(plainText, user.id).toString();
+    return CryptoJS.AES.encrypt(JSON.stringify(plainText), user.id).toString();
   }
 
   if (!user) {

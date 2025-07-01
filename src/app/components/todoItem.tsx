@@ -91,7 +91,9 @@ export default function TodoItem({ user_id, todo, setTodos }: TodoItemProps) {
   function decryptText(text: string): string {
     if (!user_id) return "";
     const bytes = CryptoJS.AES.decrypt(text, user_id);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    if (!decrypted) return text;
+    return JSON.parse(decrypted);
   }
 
   return (
