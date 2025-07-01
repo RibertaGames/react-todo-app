@@ -388,7 +388,13 @@ export default function Home() {
         {sortedDates.map((date) => (
           <div key={date} className="bg-white p-4 rounded shadow">
             <div className="flex gap-4">
-              <h2 className="text-lg font-bold mb-2 text-gray-800">
+              <h2
+                className={`text-lg mb-2 text-gray-800 ${
+                  dayjs(date).isSame(dayjs(), "day")
+                    ? "font-bold"
+                    : "font-normal"
+                }`}
+              >
                 {dayjs(date).format("YYYY年MM月DD日")}
               </h2>
             </div>
