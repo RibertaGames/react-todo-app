@@ -88,7 +88,13 @@ export default function Home() {
           .eq("user_id", user.id)
           .eq("id", routine.id);
 
-        setTodos((prev) => [...prev, ...data]);
+        if (data) {
+          const addData = (data as Todo[]).map((todo) => ({
+            ...todo,
+            text: decryptText(todo.text, user.id),
+          }));
+          setTodos((prev) => [...prev, ...addData]);
+        }
       }
     }
   }, [user]);
@@ -155,8 +161,11 @@ export default function Home() {
         console.error("追加エラー:", error);
         return;
       }
-
-      setTodos((prev) => [...prev, ...data]);
+      const addData = (data as Todo[]).map((todo) => ({
+        ...todo,
+        text: text.trim(),
+      }));
+      setTodos((prev) => [...prev, ...addData]);
     } else {
       if (repeatType === "weekly" && repeatWeekType.length === 0) {
         alert("曜日を1つ以上選択してください");
