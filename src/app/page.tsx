@@ -140,7 +140,7 @@ export default function Home() {
         .from("todos")
         .insert([
           {
-            encryptedText,
+            text: encryptedText,
             is_done: false,
             created_at: dayjs(date).toISOString(),
             user_id: user.id,
@@ -164,7 +164,7 @@ export default function Home() {
         repeatType === "weekly"
           ? [
               {
-                encryptedText,
+                text: encryptedText,
                 created_at: dayjs(date).toISOString(),
                 updated_at: null,
                 repeat_type: "weekly",
@@ -174,7 +174,7 @@ export default function Home() {
             ]
           : [
               {
-                encryptedText,
+                text: encryptedText,
                 created_at: dayjs(date).toISOString(),
                 updated_at: null,
                 repeat_type: "daily",
