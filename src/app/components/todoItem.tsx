@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Todo } from "../page";
 import { supabase } from "../../lib/supabaseClient";
 import { encryptText } from "./CryptoJS";
+import "../globals.css";
 
 type TodoItemProps = {
   user_id: string;

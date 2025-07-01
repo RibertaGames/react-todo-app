@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useEffect, useCallback, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { encryptText, decryptText } from "../components/CryptoJS";
+import "../globals.css";
 
 type Props = {
   user_id: string;

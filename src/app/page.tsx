@@ -10,6 +10,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import RoutineTaskManagerModal from "./modal/RoutineTaskModal";
 import LoginPage from "./LoginPage";
 import { encryptText, decryptText } from "./components/CryptoJS";
+import "./globals.css";
 
 export type Todo = {
   id: number;

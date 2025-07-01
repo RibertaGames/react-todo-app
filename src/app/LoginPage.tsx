@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
+import "./globals.css";
 
 export default function LoginPage() {
   const [session, setSession] = useState<Session | null>(null);
